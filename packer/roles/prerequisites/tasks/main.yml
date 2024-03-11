@@ -1,0 +1,45 @@
+- name: Disable swap for current session
+  ansible.builtin.command: swapoff -a
+
+- name: Disable swap permanently, persist reboots
+  ansible.builtin.replace:
+    path: /etc/fstab
+    regexp: '^(\s*)([^#\n]+\s+)(\w+\s+)swap(\s+.*)$'
+    replace: '#\1\2\3swap\4'
+    backup: yes
+
+- name: Configure iptables as kernel module
+  ansible.builtin.copy:
+    dest: /etc/modules-load.d/k8s.conf
+    content: |
+      overlay
+      br_netfilter
+- name: Reload modules
+  shell: "modprobe {{item}}" 
+  loop:
+  - overlay
+  - br_netfilter
+- name: Configure sysctl iptables
+  ansible.builtin.copy:
+    dest: /etc/sysctl.d/kubernetes.conf
+    content: |
+      net.bridge.bridge-nf-call-ip6tables = 1
+      net.bridge.bridge-nf-call-iptables = 1
+      net.ipv4.ip_forward = 1
+
+- name: Reload sysctl
+  ansible.builtin.shell: sysctl --system
+
+- name: Install Prerequesits
+  ansible.builtin.dnf:
+    name: conntrack, container-selinux, ebtables, ethtool, iptables, socat
+
+- name: Enable Firewall Ports for all nodes
+  ansible.posix.firewalld:
+    port: "{{ item.port }}/{{item.protocol}}"
+    state: enabled
+    immediate: true
+    permanent: true
+  loop:
+  - {port: "4240", protocol: "tcp"}
+  - {port: "8472", protocol: "udp"}

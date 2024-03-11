@@ -1,0 +1,6 @@
+- name: Initial installation
+  hosts: default
+  become: true
+  roles:
+    - prerequisites
+    - k8s

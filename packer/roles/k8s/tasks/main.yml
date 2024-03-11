@@ -1,0 +1,31 @@
+- name: Add cri-o repo
+  ansible.builtin.yum_repository:
+    name: cri-o
+    baseurl: https://pkgs.k8s.io/addons:/cri-o:/prerelease:/main/rpm/
+    enabled: yes
+    gpgcheck: yes
+    description: cri-o
+    gpgkey:
+      - https://pkgs.k8s.io/addons:/cri-o:/prerelease:/main/rpm/repodata/repomd.xml.key
+
+- name: Install cri-o
+  ansible.builtin.dnf:
+    name: cri-o
+    enablerepo:
+      - cri-o
+
+- name: Add kubernetes repo
+  ansible.builtin.yum_repository:
+    name: kubernetes
+    baseurl: https://pkgs.k8s.io/core:/stable:/v1.28/rpm/
+    enabled: yes
+    gpgcheck: yes
+    description: kubernetes
+    gpgkey:
+      - https://pkgs.k8s.io/core:/stable:/v1.28/rpm/repodata/repomd.xml.key
+
+- name: Install kubernetes
+  ansible.builtin.dnf:
+    name: podman, kubelet, kubeadm, kubectl
+    enablerepo:
+      - kubernetes
